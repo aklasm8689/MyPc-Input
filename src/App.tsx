@@ -448,17 +448,17 @@ export default function App() {
         <div className="flex items-center gap-1.5">
           <button
             type="button"
-            onClick={() => handleSendKey('esc')}
-            className="h-9 px-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 text-xs font-semibold active:bg-slate-800 active:scale-95 transition-all flex items-center justify-center shadow-xs"
-          >
-            Esc
-          </button>
-          <button
-            type="button"
             onClick={() => handleSendKey('tab')}
             className="h-9 px-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 text-xs font-semibold active:bg-slate-800 active:scale-95 transition-all flex items-center justify-center shadow-xs"
           >
             Tab
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSendKey('esc')}
+            className="h-9 px-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 text-xs font-semibold active:bg-slate-800 active:scale-95 transition-all flex items-center justify-center shadow-xs"
+          >
+            Esc
           </button>
         </div>
 

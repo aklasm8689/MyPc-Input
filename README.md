@@ -1,47 +1,69 @@
-# My Input Pc
+# 🖥️📱 My Input PC
 
-Wireless Phone-to-PC Touchpad, Keyboard, Image Clipboard & Remote Controller.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-green.svg)](https://nodejs.org/)
+[![React](https://img.shields.io/badge/react-19.0-blue.svg)](https://react.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/tailwindcss-4.3-38bdf8.svg)](https://tailwindcss.com/)
 
----
-
-## 📥 ইনস্টল ও চালু করার সহজ ধাপসমূহ (Step-by-Step Guide)
-
-> **আপনার সমস্যার সমাধান:** আগে ব্ল্যাক স্ক্রিন আসার সাথে সাথে বন্ধ হয়ে যাওয়ার কারণ ছিল Node.js বা ডিপেন্ডেন্সি সেটআপ না থাকা। এখন স্ক্রিপ্টটি আপডেট করা হয়েছে—যাতে কোনো কারণে সমস্যা হলে উইন্ডো বন্ধ না হয়ে কারণ দেখায় এবং ফার্স্ট টাইম রান করলেই ব্রাউজারে অটোমেটিক অ্যাপ ওপেন হয়ে যাবে ও ডেস্কটপে শর্টকাট তৈরি হয়ে যাবে!
-
----
-
-### ধাপ ১: প্রজেক্ট ফাইল আনজিপ করুন
-1. প্রজেক্টের জিপ (ZIP) ফাইলটি ডাউনলোড করে আপনার কম্পিউটারের যেকোনো ফোল্ডারে **Extract / আনজিপ** করুন।
-2. আপনার কম্পিউটারে **Node.js** ইনস্টল থাকতে হবে (যদি না থাকে তবে [nodejs.org](https://nodejs.org/) থেকে ডাউনলোড করে ইনস্টল করে নিন)।
+**My Input PC** is a lightning-fast, zero-lag wireless bridge that turns your mobile phone into a powerful wireless keyboard, text sender, image clipboard pusher, and remote controller for your Windows PC over local Wi-Fi.
 
 ---
 
-### ধাপ ২: সার্ভার চালু ও অটো-ওপেন (১-ক্লিক ডাবল ক্লিক)
-1. আনজিপ করা ফোল্ডারটির ভেতরে প্রবেশ করুন।
-2. **`start-background.bat`** ফাইলটিতে ডাবল-ক্লিক করুন।
-3. এটি নিজে থেকেই সব কাজ করবে:
-   - প্রথমবার রান হলে প্রয়োজনীয় প্যাকেজগুলো অটোমেটিক ইনস্টল করে নেবে।
-   - ব্যাকগ্রাউন্ডে সার্ভার চালু করবে।
-   - **স্বয়ংক্রিয়ভাবে ব্রাউজারে `http://localhost:5000` ওপেন করে দেবে।**
-   - আপনার কম্পিউটারের **Desktop-এ "My Input Pc" নামের শর্টকাট তৈরি করে দেবে**, যাতে পরবর্তীতে এক ক্লিকেই ওপেন করা যায়।
+## ✨ Key Features
+
+- ⌨️ **Instant Wireless Typing**: Type text or voice-dictate on your phone and send it directly to your PC cursor position in real time.
+- 📋 **PC Clipboard History Sync**: Anything copied on your Windows PC instantly syncs and appears as cards on your phone so you can easily copy it on mobile with 1-tap.
+- 🖼️ **Image Clipboard Paste**: Capture or select photos from your phone gallery and paste them directly into active PC windows.
+- 🎮 **Floating D-Pad & Keyboard Shortcuts**: Dedicated arrow keys (Up, Down, Left, Right), Enter, Space, Backspace, Tab, Esc, and Ctrl+Enter shortcuts right at your fingertips.
+- 🌐 **LAN QR Code Pairing**: Scan the generated QR code with your phone camera to instantly connect over local Wi-Fi without typing IP addresses.
+- 🚀 **1-Click Portable Launcher**: Double-click `start-background.bat` to launch the server in the background, create a desktop shortcut with custom icon, and auto-open the browser.
 
 ---
 
-### ধাপ ৩: মোবাইল ফোন থেকে কানেক্ট করা (QR Code)
-1. কম্পিউটারের ব্রাউজারে অ্যাপটি ওপেন হওয়ার পর উপরের ডানপাশে **QR Code আইকনে** ক্লিক করুন।
-2. আপনার মোবাইল ফোনের ক্যামেরা দিয়ে কিউআর কোডটি স্ক্যান করুন।
-3. ফোনের ব্রাউজারে কোনো আইপি বা পোর্ট টাইপ না করেই সরাসরি অ্যাপটি খুলে যাবে!
-4. ফোনের ব্রাউজার মেনু থেকে **"Add to Home screen"** বা **"Install"**-এ চাপ দিলে এটি ফোনে একটি অ্যাপের মতো যুক্ত হয়ে যাবে।
+## 📥 Quick Start Guide (For Users)
+
+1. Download or clone this repository and extract the ZIP.
+2. Ensure [Node.js](https://nodejs.org/) is installed on your computer.
+3. Double-click **`start-background.bat`**.
+   - It will automatically install required dependencies.
+   - Starts the background Node.js / Express server on port `5000`.
+   - Creates a clean Desktop shortcut (`My Input Pc.lnk`).
+   - Opens your default browser automatically.
+4. Click the **QR Code icon** in the top right, scan it with your phone camera, and start typing or syncing clipboard items instantly!
 
 ---
 
-## 🛑 সার্ভার বন্ধ করার নিয়ম (How to Stop)
+## 🛑 How to Stop & Cleanup
 
-আপনি যখন সার্ভারটি বন্ধ করতে চাইবেন:
-- ফোল্ডারে থাকা **`stop-background.bat`** ফাইলটিতে ডাবল-ক্লিক করুন।
-- এটি সাথে সাথে ব্যাকগ্রাউন্ডের সার্ভার বন্ধ করে দেবে।
+- Double-click **`stop-background.bat`**.
+- This instantly stops the background server process and removes the desktop shortcut cleanly.
 
 ---
 
-## 🖥️ পরবর্তীতে কম্পিউটার থেকে ওপেন করার নিয়ম
-- পরবর্তীতে কম্পিউটার থেকে ওপেন করতে চাইলে ফোল্ডারে বারবার যাওয়ার প্রয়োজন নেই; আপনার **Desktop-এ তৈরি হওয়া "My Input Pc" আইকনে** ডাবল-ক্লিক করলেই সরাসরি ওপেন হয়ে যাবে!
+## 🛠️ Developer Setup & Architecture
+
+If you want to run this project in development mode:
+
+```bash
+# Clone the repository
+git clone https://github.com/aklasm7484/MyInputPc.git
+
+# Navigate to project directory
+cd MyInputPc
+
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+```
+
+### Tech Stack
+- **Backend**: Node.js, Express, TypeScript (`server.ts`), PowerShell automation (`System.Windows.Forms`).
+- **Frontend**: React 19, TypeScript, Vite, Tailwind CSS 4, Lucide Icons (`src/App.tsx`).
+
+---
+
+## 📄 License
+
+This project is open-source and available under the [MIT License](LICENSE).
