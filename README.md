@@ -46,7 +46,7 @@ If you want to run this project in development mode:
 
 ```bash
 # Clone the repository
-git clone https://github.com/aklasm7484/MyPc-Input.git
+git clone https://github.com/aklasm8689/MyPc-Input.git
 
 # Navigate to project directory
 cd MyPc-Input

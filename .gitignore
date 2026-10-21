@@ -6,3 +6,9 @@ coverage/
 *.log
 .env*
 !.env.example
+.idea/
+.lanip
+app.ico
+*.iml
+.gradle/
+.aider*
