@@ -167,8 +167,12 @@ app.post('/api/image', async (req: Request, res: Response) => {
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
-$img = [System.Drawing.Image]::FromFile("${tempFile.replace(/\\/g, '\\\\')}")
+$filePath = "${tempFile.replace(/\\/g, '\\\\')}"
+$img = [System.Drawing.Image]::FromFile($filePath)
 try {
+  $files = New-Object System.Collections.Specialized.StringCollection
+  $files.Add($filePath)
+  [System.Windows.Forms.Clipboard]::SetFileDropList($files)
   [System.Windows.Forms.Clipboard]::SetImage($img)
 } finally {
   $img.Dispose()
