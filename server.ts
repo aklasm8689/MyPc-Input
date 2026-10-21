@@ -138,7 +138,7 @@ app.get(['/health', '/api/info', '/api/status'], (_req: Request, res: Response) 
   const lanIp = getLanIp();
   res.json({
     status: 'ok',
-    app: 'MyPcInput',
+    app: 'MyPc-Input',
     hostname: os.hostname(),
     platform: process.platform,
     ip: lanIp,
@@ -314,7 +314,7 @@ async function startServer() {
   const server = http.createServer(app);
 
   server.listen(PORT, '0.0.0.0', () => {
-    console.log(`MyPcInput server running on http://0.0.0.0:${PORT}`);
+    console.log(`MyPc-Input server running on http://0.0.0.0:${PORT}`);
   });
 }
 

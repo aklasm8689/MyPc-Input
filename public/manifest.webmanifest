@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "MyPcInput",
-  "short_name": "MyPcInput",
+  "name": "MyPc-Input",
+  "short_name": "MyPc-Input",
   "description": "Wireless phone-to-PC text input, keyboard, and image clipboard input.",
   "start_url": "/",
   "scope": "/",

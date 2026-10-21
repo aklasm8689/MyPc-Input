@@ -3,7 +3,7 @@ $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 Set-Location $scriptDir
 
 Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host "       MyPcInput - Starting Server & App" -ForegroundColor Cyan
+Write-Host "       MyPc-Input - Starting Server & App" -ForegroundColor Cyan
 Write-Host "==========================================================" -ForegroundColor Cyan
 
 # 1. Check Node.js
@@ -63,17 +63,19 @@ while (-not $portOpen -and $attempts -lt 15) {
 $desktop = [Environment]::GetFolderPath('Desktop')
 $oldUrl = Join-Path $desktop 'My Input Pc.url'
 if (Test-Path $oldUrl) { Remove-Item $oldUrl -Force }
-$oldLnk = Join-Path $desktop 'My Input Pc.lnk'
-if (Test-Path $oldLnk) { Remove-Item $oldLnk -Force }
+$oldLnk1 = Join-Path $desktop 'My Input Pc.lnk'
+if (Test-Path $oldLnk1) { Remove-Item $oldLnk1 -Force }
+$oldLnk2 = Join-Path $desktop 'MyPcInput.lnk'
+if (Test-Path $oldLnk2) { Remove-Item $oldLnk2 -Force }
 
-$shortcutPath = Join-Path $desktop 'MyPcInput.lnk'
+$shortcutPath = Join-Path $desktop 'MyPc-Input.lnk'
 Write-Host "[INFO] Creating Desktop Shortcut at: $shortcutPath" -ForegroundColor Yellow
 try {
     $WshShell = New-Object -comObject WScript.Shell
     $Shortcut = $WshShell.CreateShortcut($shortcutPath)
     $Shortcut.TargetPath = "cmd.exe"
     $Shortcut.Arguments = "/c start $url"
-    $Shortcut.Description = "MyPcInput - Wireless Text Input & Clipboard Sync"
+    $Shortcut.Description = "MyPc-Input - Wireless Text Input & Clipboard Sync"
     $Shortcut.IconLocation = "shell32.dll,264"
     $Shortcut.Save()
 } catch {
@@ -85,6 +87,6 @@ Write-Host "[INFO] Opening browser at $url ..." -ForegroundColor Yellow
 Start-Process $url
 
 Write-Host "==========================================================" -ForegroundColor Green
-Write-Host "   SUCCESS! MyPcInput is running at $url" -ForegroundColor Green
+Write-Host "   SUCCESS! MyPc-Input is running at $url" -ForegroundColor Green
 Write-Host "==========================================================" -ForegroundColor Green
 Start-Sleep -Seconds 3

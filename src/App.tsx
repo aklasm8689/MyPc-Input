@@ -301,12 +301,12 @@ export default function App() {
           >
             <img
               src="/icon.png"
-              alt="MyPcInput"
+              alt="MyPc-Input"
               className="w-7 h-7 rounded-full object-contain shrink-0"
             />
             <div className="flex flex-col">
               <span className="text-sm font-bold tracking-tight text-white leading-none">
-                MyPcInput
+                MyPc-Input
               </span>
               <span className="text-[10px] text-slate-400 font-normal truncate max-w-[120px] mt-0.5">
                 {status === 'connected' ? pcName : 'Offline'}
