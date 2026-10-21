@@ -75,6 +75,49 @@ app.post('/api/clipboard/clear', async (_req: Request, res: Response) => {
   res.json({ status: 'ok' });
 });
 
+// Auto-start check and toggle endpoints
+app.get('/api/autostart', async (_req: Request, res: Response) => {
+  if (process.platform !== 'win32') {
+    res.json({ enabled: false });
+    return;
+  }
+  const script = `
+$regPath = "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"
+$name = "MyPc-Input"
+$exists = Get-ItemProperty -Path $regPath -Name $name -ErrorAction SilentlyContinue
+if ($exists) { "true" } else { "false" }
+`;
+  const encoded = Buffer.from(script, 'utf16le').toString('base64');
+  exec(`powershell.exe -NoProfile -STA -EncodedCommand ${encoded}`, (err, stdout) => {
+    const enabled = !err && stdout.trim() === 'true';
+    res.json({ enabled });
+  });
+});
+
+app.post('/api/autostart', async (req: Request, res: Response) => {
+  const { enable = false } = req.body;
+  if (process.platform !== 'win32') {
+    res.json({ status: 'ok', enabled });
+    return;
+  }
+  const batPath = path.resolve(process.cwd(), 'start-background.bat');
+  const script = enable
+    ? `
+$regPath = "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"
+$name = "MyPc-Input"
+Set-ItemProperty -Path $regPath -Name $name -Value '"${batPath}"'
+`
+    : `
+$regPath = "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"
+$name = "MyPc-Input"
+Remove-ItemProperty -Path $regPath -Name $name -ErrorAction SilentlyContinue
+`;
+  const encoded = Buffer.from(script, 'utf16le').toString('base64');
+  exec(`powershell.exe -NoProfile -STA -EncodedCommand ${encoded}`, (err) => {
+    res.json({ status: 'ok', enabled: !err && enable });
+  });
+});
+
 // Persistent background PowerShell worker for typing and keyboard actions
 let pwshProcess: ChildProcess | null = null;
 
@@ -242,7 +285,7 @@ Add-Type -AssemblyName System.Windows.Forms
         await executeWindowsAction(`
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 Add-Type -AssemblyName System.Windows.Forms
-[System.Windows.Forms.SendKeys]::SendVar(" ")
+[System.Windows.Forms.SendKeys]::SendWait(" ")
 `);
       }
     }
