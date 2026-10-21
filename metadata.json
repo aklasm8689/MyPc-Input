@@ -1,7 +1,6 @@
 {
-  "name": "My Input Pc",
+  "name": "MyPcInput",
   "description": "Wireless phone-to-PC text input, voice typing, and clipboard sync controller for Windows.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
-

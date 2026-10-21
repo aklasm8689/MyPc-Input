@@ -1,11 +1,11 @@
-# 🖥️📱 My Input PC
+# 🖥️📱 MyPcInput
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-green.svg)](https://nodejs.org/)
 [![React](https://img.shields.io/badge/react-19.0-blue.svg)](https://react.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/tailwindcss-4.3-38bdf8.svg)](https://tailwindcss.com/)
 
-**My Input PC** is a lightning-fast, zero-lag wireless bridge that turns your mobile phone into a powerful wireless keyboard, text sender, image clipboard pusher, and remote controller for your Windows PC over local Wi-Fi.
+**MyPcInput** is a lightning-fast, zero-lag wireless bridge that turns your mobile phone into a powerful wireless keyboard, text sender, image clipboard pusher, and remote controller for your Windows PC over local Wi-Fi.
 
 ---
 
@@ -27,7 +27,7 @@
 3. Double-click **`start-background.bat`**.
    - It will automatically install required dependencies.
    - Starts the background Node.js / Express server on port `5000`.
-   - Creates a clean Desktop shortcut (`My Input Pc.lnk`).
+   - Creates a clean Desktop shortcut (`MyPcInput.lnk`).
    - Opens your default browser automatically.
 4. Click the **QR Code icon** in the top right, scan it with your phone camera, and start typing or syncing clipboard items instantly!
 
@@ -46,10 +46,10 @@ If you want to run this project in development mode:
 
 ```bash
 # Clone the repository
-git clone https://github.com/aklasm7484/MyInputPc.git
+git clone https://github.com/aklasm7484/MyPcInput.git
 
 # Navigate to project directory
-cd MyInputPc
+cd MyPcInput
 
 # Install dependencies
 npm install

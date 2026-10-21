@@ -3,7 +3,7 @@ $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 Set-Location $scriptDir
 
 Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host "       My Input Pc - Starting Server & App" -ForegroundColor Cyan
+Write-Host "       MyPcInput - Starting Server & App" -ForegroundColor Cyan
 Write-Host "==========================================================" -ForegroundColor Cyan
 
 # 1. Check Node.js
@@ -63,15 +63,17 @@ while (-not $portOpen -and $attempts -lt 15) {
 $desktop = [Environment]::GetFolderPath('Desktop')
 $oldUrl = Join-Path $desktop 'My Input Pc.url'
 if (Test-Path $oldUrl) { Remove-Item $oldUrl -Force }
+$oldLnk = Join-Path $desktop 'My Input Pc.lnk'
+if (Test-Path $oldLnk) { Remove-Item $oldLnk -Force }
 
-$shortcutPath = Join-Path $desktop 'My Input Pc.lnk'
+$shortcutPath = Join-Path $desktop 'MyPcInput.lnk'
 Write-Host "[INFO] Creating Desktop Shortcut at: $shortcutPath" -ForegroundColor Yellow
 try {
     $WshShell = New-Object -comObject WScript.Shell
     $Shortcut = $WshShell.CreateShortcut($shortcutPath)
     $Shortcut.TargetPath = "cmd.exe"
     $Shortcut.Arguments = "/c start $url"
-    $Shortcut.Description = "My Input Pc - Wireless Touchpad & Keyboard"
+    $Shortcut.Description = "MyPcInput - Wireless Text Input & Clipboard Sync"
     $Shortcut.IconLocation = "shell32.dll,264"
     $Shortcut.Save()
 } catch {
@@ -83,6 +85,6 @@ Write-Host "[INFO] Opening browser at $url ..." -ForegroundColor Yellow
 Start-Process $url
 
 Write-Host "==========================================================" -ForegroundColor Green
-Write-Host "   SUCCESS! My Input Pc is running at $url" -ForegroundColor Green
+Write-Host "   SUCCESS! MyPcInput is running at $url" -ForegroundColor Green
 Write-Host "==========================================================" -ForegroundColor Green
 Start-Sleep -Seconds 3

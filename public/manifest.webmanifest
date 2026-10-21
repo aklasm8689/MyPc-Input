@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "My Input Pc",
-  "short_name": "MyInput",
-  "description": "Wireless phone-to-PC touchpad, keyboard, and image clipboard input.",
+  "name": "MyPcInput",
+  "short_name": "MyPcInput",
+  "description": "Wireless phone-to-PC text input, keyboard, and image clipboard input.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

@@ -1,7 +1,7 @@
 @echo off
-title My Input Pc - Stop Server
+title MyPcInput - Stop Server
 echo ==========================================================
-echo        Stopping My Input Pc Server & Cleanup...
+echo        Stopping MyPcInput Server & Cleanup...
 echo ==========================================================
 
 :: Kill process running on port 5000
@@ -10,6 +10,9 @@ for /f "tokens=5" %%a in ('netstat -ano ^| findstr :5000') do (
 )
 
 :: Remove Desktop Shortcuts
+if exist "%USERPROFILE%\Desktop\MyPcInput.lnk" (
+    del /f /q "%USERPROFILE%\Desktop\MyPcInput.lnk" >nul 2>&1
+)
 if exist "%USERPROFILE%\Desktop\My Input Pc.lnk" (
     del /f /q "%USERPROFILE%\Desktop\My Input Pc.lnk" >nul 2>&1
 )
