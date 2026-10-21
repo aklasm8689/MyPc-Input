@@ -18,6 +18,10 @@ import {
   Clipboard,
   Trash2,
   Monitor,
+  ChevronUp,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 export default function App() {
@@ -352,9 +356,9 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main Content Area: PC Clipboard History sync viewer */}
-      <main className="flex-1 flex flex-col p-3.5 min-h-0 gap-3 overflow-y-auto">
-        <div className="flex-1 flex flex-col rounded-2xl bg-slate-900/60 border border-slate-800 p-3.5 min-h-[200px] overflow-hidden shadow-inner">
+      {/* Main Content Area: PC Clipboard History sync viewer with Floating D-Pad */}
+      <main className="flex-1 flex flex-col p-3.5 min-h-0 gap-3 overflow-y-auto relative">
+        <div className="flex-1 flex flex-col rounded-2xl bg-slate-900/60 border border-slate-800 p-3.5 min-h-[200px] overflow-hidden shadow-inner relative">
           <div className="flex items-center justify-between mb-2.5 shrink-0">
             <span className="text-xs font-semibold tracking-wider uppercase text-slate-300 flex items-center gap-1.5">
               <Clipboard className="w-4 h-4 text-blue-400" />
@@ -372,7 +376,7 @@ export default function App() {
             )}
           </div>
 
-          <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 no-scrollbar">
+          <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 no-scrollbar pb-16">
             {clipboardItems.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-500 text-xs gap-1.5">
                 <Clipboard className="w-10 h-10 opacity-20 mb-1 text-blue-400" />
@@ -399,9 +403,47 @@ export default function App() {
             )}
           </div>
         </div>
+
+        {/* Floating D-Pad Arrow Keys (Floating over clipboard card, no background card) */}
+        <div className="absolute bottom-6 right-6 z-20 grid grid-cols-3 gap-1.5 select-none pointer-events-auto">
+          <div />
+          <button
+            type="button"
+            onClick={() => handleSendKey('up')}
+            className="h-10 w-11 rounded-xl bg-slate-900/90 backdrop-blur-md border border-slate-700/80 text-slate-100 hover:bg-slate-800 active:bg-blue-600 active:text-white active:scale-95 transition-all flex items-center justify-center shadow-xl"
+            title="Up Arrow"
+          >
+            <ChevronUp className="w-5 h-5" />
+          </button>
+          <div />
+          <button
+            type="button"
+            onClick={() => handleSendKey('left')}
+            className="h-10 w-11 rounded-xl bg-slate-900/90 backdrop-blur-md border border-slate-700/80 text-slate-100 hover:bg-slate-800 active:bg-blue-600 active:text-white active:scale-95 transition-all flex items-center justify-center shadow-xl"
+            title="Left Arrow"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSendKey('down')}
+            className="h-10 w-11 rounded-xl bg-slate-900/90 backdrop-blur-md border border-slate-700/80 text-slate-100 hover:bg-slate-800 active:bg-blue-600 active:text-white active:scale-95 transition-all flex items-center justify-center shadow-xl"
+            title="Down Arrow"
+          >
+            <ChevronDown className="w-5 h-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSendKey('right')}
+            className="h-10 w-11 rounded-xl bg-slate-900/90 backdrop-blur-md border border-slate-700/80 text-slate-100 hover:bg-slate-800 active:bg-blue-600 active:text-white active:scale-95 transition-all flex items-center justify-center shadow-xl"
+            title="Right Arrow"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
       </main>
 
-      {/* Keyboard Shortcut Bar */}
+      {/* Keyboard Shortcut Bar (Clean Single Row without D-Pad) */}
       <section className="px-3 pb-2 flex items-center justify-between gap-1.5 shrink-0 overflow-x-auto no-scrollbar">
         <div className="flex items-center gap-1.5">
           <button
