@@ -2,14 +2,15 @@ import express, { Request, Response } from 'express';
 import { createServer as createViteServer } from 'vite';
 import os from 'os';
 import path from 'path';
-import { exec } from 'child_process';
+import http from 'http';
+import { exec, spawn, ChildProcess } from 'child_process';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = Number(process.env.PORT) || (process.platform === 'win32' ? 5000 : 3000);
+const PORT = Number(process.env.PORT) || 5000;
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
@@ -17,11 +18,98 @@ app.use(express.urlencoded({ extended: true }));
 // Simple in-memory receiver for active inputs
 const recentEvents: Array<{ id: string; time: number; type: string; value: string }> = [];
 
-// Helper to execute Windows PowerShell commands safely
+// Clipboard history in-memory (on-demand checking for 0% idle CPU usage)
+const clipboardHistory: Array<{ id: string; text: string; time: string }> = [];
+let lastClipboardText = '';
+
+function fetchCurrentClipboard(): Promise<string> {
+  return new Promise((resolve) => {
+    if (process.platform !== 'win32') {
+      resolve('');
+      return;
+    }
+    const script = `
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+Add-Type -AssemblyName System.Windows.Forms
+if ([System.Windows.Forms.Clipboard]::ContainsText()) {
+    [System.Windows.Forms.Clipboard]::GetText()
+}
+`;
+    const encoded = Buffer.from(script, 'utf16le').toString('base64');
+    exec(`powershell.exe -NoProfile -STA -EncodedCommand ${encoded}`, { encoding: 'buffer' }, (err, stdout: any) => {
+      if (err || !stdout) {
+        resolve('');
+        return;
+      }
+      const txt = Buffer.isBuffer(stdout) ? stdout.toString('utf8').trim() : stdout.toString().trim();
+      resolve(txt || '');
+    });
+  });
+}
+
+app.get('/api/clipboard', async (_req: Request, res: Response) => {
+  try {
+    const currentText = await fetchCurrentClipboard();
+    if (currentText && currentText !== lastClipboardText && currentText.length < 5000) {
+      lastClipboardText = currentText;
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      clipboardHistory.unshift({
+        id: Date.now().toString(),
+        text: currentText,
+        time: timeStr,
+      });
+      if (clipboardHistory.length > 30) clipboardHistory.pop();
+    }
+  } catch {}
+  res.json({ items: clipboardHistory });
+});
+
+app.post('/api/clipboard/clear', async (_req: Request, res: Response) => {
+  clipboardHistory.length = 0;
+  try {
+    const currentText = await fetchCurrentClipboard();
+    lastClipboardText = currentText;
+  } catch {
+    lastClipboardText = '';
+  }
+  res.json({ status: 'ok' });
+});
+
+// Persistent background PowerShell worker for typing and keyboard actions
+let pwshProcess: ChildProcess | null = null;
+
+function initWindowsWorker() {
+  if (process.platform === 'win32' && !pwshProcess) {
+    try {
+      pwshProcess = spawn('powershell.exe', ['-NoProfile', '-STA'], {
+        windowsHide: true,
+      });
+
+      pwshProcess.on('error', (err) => {
+        console.error('Persistent PowerShell worker error:', err);
+        pwshProcess = null;
+      });
+
+      pwshProcess.on('exit', () => {
+        pwshProcess = null;
+      });
+
+      pwshProcess.stdin?.write(`
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName System.Drawing
+\n`);
+    } catch (e) {
+      console.error('Failed to start persistent PowerShell worker:', e);
+    }
+  }
+}
+
+initWindowsWorker();
+
 function executeWindowsAction(script: string): Promise<boolean> {
   return new Promise((resolve) => {
     if (process.platform !== 'win32') {
-      // In dev sandbox or non-windows
       resolve(true);
       return;
     }
@@ -76,6 +164,7 @@ app.post('/api/image', async (req: Request, res: Response) => {
 
     if (process.platform === 'win32') {
       const script = `
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 $img = [System.Drawing.Image]::FromFile("${tempFile.replace(/\\/g, '\\\\')}")
@@ -110,9 +199,9 @@ app.post('/api/input', async (req: Request, res: Response) => {
 
     if (process.platform === 'win32') {
       if (text) {
-        // Copy unicode to clipboard and paste
         const escaped = text.replace(/`/g, '``').replace(/"/g, '`"');
         const script = `
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 Add-Type -AssemblyName System.Windows.Forms
 Set-Clipboard -Value "${escaped}"
 Start-Sleep -Milliseconds 40
@@ -123,28 +212,33 @@ Start-Sleep -Milliseconds 40
 
       if (action === 'enter') {
         await executeWindowsAction(`
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 Add-Type -AssemblyName System.Windows.Forms
 [System.Windows.Forms.SendKeys]::SendWait("{ENTER}")
 `);
       } else if (action === 'ctrl_enter') {
         await executeWindowsAction(`
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 Add-Type -AssemblyName System.Windows.Forms
 [System.Windows.Forms.SendKeys]::SendWait("^{ENTER}")
 `);
       } else if (action === 'shift_enter') {
         await executeWindowsAction(`
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 Add-Type -AssemblyName System.Windows.Forms
 [System.Windows.Forms.SendKeys]::SendWait("+{ENTER}")
 `);
       } else if (action === 'backspace') {
         await executeWindowsAction(`
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 Add-Type -AssemblyName System.Windows.Forms
 [System.Windows.Forms.SendKeys]::SendWait("{BACKSPACE}")
 `);
       } else if (action === 'space') {
         await executeWindowsAction(`
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 Add-Type -AssemblyName System.Windows.Forms
-[System.Windows.Forms.SendKeys]::SendWait(" ")
+[System.Windows.Forms.SendKeys]::SendVar(" ")
 `);
       }
     }
@@ -183,6 +277,7 @@ app.post('/api/key', async (req: Request, res: Response) => {
 
       if (winKey) {
         await executeWindowsAction(`
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 Add-Type -AssemblyName System.Windows.Forms
 [System.Windows.Forms.SendKeys]::SendWait("${winKey}")
 `);
@@ -190,54 +285,6 @@ Add-Type -AssemblyName System.Windows.Forms
     }
 
     res.json({ status: 'ok', key });
-  } catch (err: any) {
-    res.status(500).json({ status: 'error', error: err.message });
-  }
-});
-
-// Mouse movement, click, and 2-finger scroll endpoint
-app.post('/api/mouse', async (req: Request, res: Response) => {
-  try {
-    const { type, dx = 0, dy = 0, button = 'left' } = req.body;
-
-    if (process.platform === 'win32') {
-      if (type === 'move') {
-        const script = `
-Add-Type -AssemblyName System.Windows.Forms
-$pos = [System.Windows.Forms.Cursor]::Position
-[System.Windows.Forms.Cursor]::Position = New-Object System.Drawing.Point(($pos.X + ${Math.round(dx)}), ($pos.Y + ${Math.round(dy)}))
-`;
-        await executeWindowsAction(script);
-      } else if (type === 'scroll') {
-        // dy > 0: scroll down, dy < 0: scroll up
-        const wheelDelta = Math.round(-dy * 40);
-        const script = `
-$sig = @'
-[DllImport("user32.dll")]
-public static extern void mouse_event(int dwFlags, int dx, int dy, int cButtons, int dwExtraInfo);
-'@
-$type = Add-Type -MemberDefinition $sig -Name "Win32Scroll" -Namespace "Win32" -PassThru
-$type::mouse_event(0x0800, 0, 0, ${wheelDelta}, 0)
-`;
-        await executeWindowsAction(script);
-      } else if (type === 'click') {
-        const flagDown = button === 'right' ? '0x0008' : '0x0002';
-        const flagUp = button === 'right' ? '0x0010' : '0x0004';
-        const script = `
-$sig = @'
-[DllImport("user32.dll")]
-public static extern void mouse_event(int dwFlags, int dx, int dy, int cButtons, int dwExtraInfo);
-'@
-$type = Add-Type -MemberDefinition $sig -Name "Win32Mouse" -Namespace "Win32" -PassThru
-$type::mouse_event(${flagDown}, 0, 0, 0, 0)
-Start-Sleep -Milliseconds 20
-$type::mouse_event(${flagUp}, 0, 0, 0, 0)
-`;
-        await executeWindowsAction(script);
-      }
-    }
-
-    res.json({ status: 'ok', type, dx, dy, button });
   } catch (err: any) {
     res.status(500).json({ status: 'error', error: err.message });
   }
@@ -264,7 +311,9 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  const server = http.createServer(app);
+
+  server.listen(PORT, '0.0.0.0', () => {
     console.log(`My Input Pc server running on http://0.0.0.0:${PORT}`);
   });
 }
