@@ -1,0 +1,272 @@
+import express, { Request, Response } from 'express';
+import { createServer as createViteServer } from 'vite';
+import os from 'os';
+import path from 'path';
+import { exec } from 'child_process';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app = express();
+const PORT = Number(process.env.PORT) || (process.platform === 'win32' ? 5000 : 3000);
+
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+
+// Simple in-memory receiver for active inputs
+const recentEvents: Array<{ id: string; time: number; type: string; value: string }> = [];
+
+// Helper to execute Windows PowerShell commands safely
+function executeWindowsAction(script: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (process.platform !== 'win32') {
+      // In dev sandbox or non-windows
+      resolve(true);
+      return;
+    }
+    const encoded = Buffer.from(script, 'utf16le').toString('base64');
+    exec(`powershell.exe -NoProfile -STA -EncodedCommand ${encoded}`, (err) => {
+      resolve(!err);
+    });
+  });
+}
+
+// Helper to get primary LAN IP address
+function getLanIp(): string {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name] || []) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        return iface.address;
+      }
+    }
+  }
+  return '127.0.0.1';
+}
+
+// Health check / PC info endpoint with LAN IP
+app.get(['/health', '/api/info', '/api/status'], (_req: Request, res: Response) => {
+  const lanIp = getLanIp();
+  res.json({
+    status: 'ok',
+    app: 'My Input Pc',
+    hostname: os.hostname(),
+    platform: process.platform,
+    ip: lanIp,
+    port: PORT,
+    lanUrl: `http://${lanIp}:${PORT}`,
+  });
+});
+
+// Image upload and direct clipboard paste into Windows active window
+app.post('/api/image', async (req: Request, res: Response) => {
+  try {
+    const { base64 = '', name = 'image.png' } = req.body;
+    if (!base64) {
+      res.status(400).json({ status: 'error', error: 'No image data provided' });
+      return;
+    }
+
+    const cleanBase64 = base64.replace(/^data:image\/\w+;base64,/, '');
+    const buffer = Buffer.from(cleanBase64, 'base64');
+    const tempDir = os.tmpdir();
+    const tempFile = path.join(tempDir, `myinput_${Date.now()}.png`);
+    await import('fs/promises').then(fs => fs.writeFile(tempFile, buffer));
+
+    if (process.platform === 'win32') {
+      const script = `
+Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName System.Drawing
+$img = [System.Drawing.Image]::FromFile("${tempFile.replace(/\\/g, '\\\\')}")
+try {
+  [System.Windows.Forms.Clipboard]::SetImage($img)
+} finally {
+  $img.Dispose()
+}
+Start-Sleep -Milliseconds 60
+[System.Windows.Forms.SendKeys]::SendWait("^v")
+`;
+      await executeWindowsAction(script);
+    }
+
+    res.json({ status: 'ok', message: 'Image pasted to active window' });
+  } catch (err: any) {
+    res.status(500).json({ status: 'error', error: err.message });
+  }
+});
+
+// Text input endpoint
+app.post('/api/input', async (req: Request, res: Response) => {
+  try {
+    const { text = '', action = 'none' } = req.body;
+    recentEvents.unshift({
+      id: Date.now().toString(),
+      time: Date.now(),
+      type: 'input',
+      value: text ? `${text} (${action})` : action,
+    });
+    if (recentEvents.length > 50) recentEvents.pop();
+
+    if (process.platform === 'win32') {
+      if (text) {
+        // Copy unicode to clipboard and paste
+        const escaped = text.replace(/`/g, '``').replace(/"/g, '`"');
+        const script = `
+Add-Type -AssemblyName System.Windows.Forms
+Set-Clipboard -Value "${escaped}"
+Start-Sleep -Milliseconds 40
+[System.Windows.Forms.SendKeys]::SendWait("^v")
+`;
+        await executeWindowsAction(script);
+      }
+
+      if (action === 'enter') {
+        await executeWindowsAction(`
+Add-Type -AssemblyName System.Windows.Forms
+[System.Windows.Forms.SendKeys]::SendWait("{ENTER}")
+`);
+      } else if (action === 'ctrl_enter') {
+        await executeWindowsAction(`
+Add-Type -AssemblyName System.Windows.Forms
+[System.Windows.Forms.SendKeys]::SendWait("^{ENTER}")
+`);
+      } else if (action === 'shift_enter') {
+        await executeWindowsAction(`
+Add-Type -AssemblyName System.Windows.Forms
+[System.Windows.Forms.SendKeys]::SendWait("+{ENTER}")
+`);
+      } else if (action === 'backspace') {
+        await executeWindowsAction(`
+Add-Type -AssemblyName System.Windows.Forms
+[System.Windows.Forms.SendKeys]::SendWait("{BACKSPACE}")
+`);
+      } else if (action === 'space') {
+        await executeWindowsAction(`
+Add-Type -AssemblyName System.Windows.Forms
+[System.Windows.Forms.SendKeys]::SendWait(" ")
+`);
+      }
+    }
+
+    res.json({ status: 'ok', typed: text, action });
+  } catch (err: any) {
+    res.status(500).json({ status: 'error', error: err.message });
+  }
+});
+
+// Single Key endpoint
+app.post('/api/key', async (req: Request, res: Response) => {
+  try {
+    const { key } = req.body;
+    recentEvents.unshift({
+      id: Date.now().toString(),
+      time: Date.now(),
+      type: 'key',
+      value: key,
+    });
+    if (recentEvents.length > 50) recentEvents.pop();
+
+    if (process.platform === 'win32') {
+      let winKey = '';
+      if (key === 'enter') winKey = '{ENTER}';
+      else if (key === 'ctrl_enter') winKey = '^{ENTER}';
+      else if (key === 'shift_enter') winKey = '+{ENTER}';
+      else if (key === 'backspace') winKey = '{BACKSPACE}';
+      else if (key === 'space') winKey = ' ';
+      else if (key === 'tab') winKey = '{TAB}';
+      else if (key === 'esc') winKey = '{ESC}';
+      else if (key === 'up') winKey = '{UP}';
+      else if (key === 'down') winKey = '{DOWN}';
+      else if (key === 'left') winKey = '{LEFT}';
+      else if (key === 'right') winKey = '{RIGHT}';
+
+      if (winKey) {
+        await executeWindowsAction(`
+Add-Type -AssemblyName System.Windows.Forms
+[System.Windows.Forms.SendKeys]::SendWait("${winKey}")
+`);
+      }
+    }
+
+    res.json({ status: 'ok', key });
+  } catch (err: any) {
+    res.status(500).json({ status: 'error', error: err.message });
+  }
+});
+
+// Mouse movement, click, and 2-finger scroll endpoint
+app.post('/api/mouse', async (req: Request, res: Response) => {
+  try {
+    const { type, dx = 0, dy = 0, button = 'left' } = req.body;
+
+    if (process.platform === 'win32') {
+      if (type === 'move') {
+        const script = `
+Add-Type -AssemblyName System.Windows.Forms
+$pos = [System.Windows.Forms.Cursor]::Position
+[System.Windows.Forms.Cursor]::Position = New-Object System.Drawing.Point(($pos.X + ${Math.round(dx)}), ($pos.Y + ${Math.round(dy)}))
+`;
+        await executeWindowsAction(script);
+      } else if (type === 'scroll') {
+        // dy > 0: scroll down, dy < 0: scroll up
+        const wheelDelta = Math.round(-dy * 40);
+        const script = `
+$sig = @'
+[DllImport("user32.dll")]
+public static extern void mouse_event(int dwFlags, int dx, int dy, int cButtons, int dwExtraInfo);
+'@
+$type = Add-Type -MemberDefinition $sig -Name "Win32Scroll" -Namespace "Win32" -PassThru
+$type::mouse_event(0x0800, 0, 0, ${wheelDelta}, 0)
+`;
+        await executeWindowsAction(script);
+      } else if (type === 'click') {
+        const flagDown = button === 'right' ? '0x0008' : '0x0002';
+        const flagUp = button === 'right' ? '0x0010' : '0x0004';
+        const script = `
+$sig = @'
+[DllImport("user32.dll")]
+public static extern void mouse_event(int dwFlags, int dx, int dy, int cButtons, int dwExtraInfo);
+'@
+$type = Add-Type -MemberDefinition $sig -Name "Win32Mouse" -Namespace "Win32" -PassThru
+$type::mouse_event(${flagDown}, 0, 0, 0, 0)
+Start-Sleep -Milliseconds 20
+$type::mouse_event(${flagUp}, 0, 0, 0, 0)
+`;
+        await executeWindowsAction(script);
+      }
+    }
+
+    res.json({ status: 'ok', type, dx, dy, button });
+  } catch (err: any) {
+    res.status(500).json({ status: 'error', error: err.message });
+  }
+});
+
+// Feed for the UI to monitor events
+app.get('/api/events', (_req: Request, res: Response) => {
+  res.json({ events: recentEvents });
+});
+
+async function startServer() {
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  if (!isProduction) {
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: 'spa',
+    });
+    app.use(vite.middlewares);
+  } else {
+    app.use(express.static(path.resolve(__dirname, 'dist')));
+    app.get('*', (_req: Request, res: Response) => {
+      res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
+    });
+  }
+
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`My Input Pc server running on http://0.0.0.0:${PORT}`);
+  });
+}
+
+startServer();

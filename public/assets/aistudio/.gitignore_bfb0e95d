@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# My Input local data (never commit)
+my_input.pid
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
