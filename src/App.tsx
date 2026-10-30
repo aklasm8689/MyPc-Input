@@ -6,21 +6,25 @@ import {
   Image as ImageIcon,
   Settings,
   X,
-  Wifi,
-  WifiOff,
+
+
   QrCode,
   Check,
-  AlertTriangle,
+
   Smartphone,
   Copy,
-  Keyboard,
-  Sparkles,
+
+
   Clipboard,
   Trash2,
-  Monitor,
-  CheckSquare,
-  Square,
-  Power,
+
+
+
+
+  ChevronUp,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 export default function App() {
@@ -59,7 +63,15 @@ export default function App() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const checkDesktop = () => setIsDesktop(window.innerWidth >= 768);
+    const checkDesktop = () => {
+      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const desktop = !isMobileDevice && window.innerWidth >= 768;
+      setIsDesktop(desktop);
+      if (desktop && !sessionStorage.getItem('my_input_qr_shown')) {
+        setShowQrModal(true);
+        sessionStorage.setItem('my_input_qr_shown', '1');
+      }
+    };
     checkDesktop();
     window.addEventListener('resize', checkDesktop);
     return () => window.removeEventListener('resize', checkDesktop);
@@ -311,75 +323,6 @@ export default function App() {
     }
   };
 
-  // If accessed from PC Desktop screen, show PC Control Center Dashboard
-  if (isDesktop) {
-    const currentUrl = lanUrl || window.location.href;
-    return (
-      <div className="h-[100dvh] w-full bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-6 select-none font-sans">
-        <div className="w-full max-w-xl rounded-3xl bg-slate-900 border border-slate-800 p-8 flex flex-col gap-6 shadow-2xl">
-          {/* Header */}
-          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-            <div className="flex items-center gap-3">
-              <img src="/icon.png" alt="MyPc-Input" className="w-12 h-12 rounded-2xl object-contain shadow-md" />
-              <div>
-                <h1 className="text-xl font-extrabold text-white tracking-tight">MyPc-Input Control Center</h1>
-                <p className="text-xs text-slate-400">Wireless Phone-to-PC Text & Clipboard Bridge</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>Server Running</span>
-            </div>
-          </div>
-
-          {/* QR Code Section */}
-          <div className="flex flex-col items-center gap-3 py-2">
-            <div className="p-4 bg-white rounded-2xl shadow-lg">
-              <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(currentUrl)}`}
-                alt="QR Code"
-                className="w-[200px] h-[200px] object-contain rounded-lg"
-              />
-            </div>
-            <span className="text-xs text-slate-400 font-mono text-center bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 select-all">
-              {currentUrl}
-            </span>
-          </div>
-
-          {/* Auto-Start Checkbox Option */}
-          <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-950 border border-slate-800">
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold text-white">কম্পিউটার চালু হওয়ার সাথে সাথে চালু করতে চাই</span>
-              <span className="text-xs text-slate-400">Start MyPc-Input automatically when Windows boots up</span>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={autoStart}
-                onChange={toggleAutoStart}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-            </label>
-          </div>
-
-          {/* Footer Actions */}
-          <div className="flex items-center justify-between pt-2">
-            <button
-              type="button"
-              onClick={copyUrlToClipboard}
-              className="flex-1 h-11 rounded-xl bg-blue-600 text-white text-xs font-semibold flex items-center justify-center gap-2 hover:bg-blue-700 active:scale-95 transition-all shadow-sm"
-            >
-              {copiedUrl ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              <span>{copiedUrl ? 'Link Copied to Clipboard!' : 'Copy Connection Link'}</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Mobile / Phone UI
   return (
     <div className="h-[100dvh] w-full bg-slate-950 text-slate-100 flex flex-col justify-between overflow-hidden select-none font-sans">
       {/* Top Header Bar */}
@@ -405,6 +348,40 @@ export default function App() {
               <span className="w-2 h-2 rounded-full bg-rose-500 ml-0.5 shrink-0" />
             )}
           </div>
+        </div>
+        <div className="flex items-center gap-1.5">
+          {installPrompt && !isAppInstalled && (
+            <button
+              type="button"
+              onClick={handleInstallClick}
+              className="h-8 px-2.5 rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-400 hover:bg-blue-600 hover:text-white active:scale-95 text-[11px] font-semibold transition-all flex items-center gap-1.5 shadow-xs"
+              title="Install Web App"
+            >
+              <Smartphone className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Install</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setShowQrModal(true)}
+            className="h-8 w-8 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-blue-400 hover:border-slate-700 active:scale-95 transition-all flex items-center justify-center shadow-xs"
+            title="Scan QR Code to Connect Phone"
+          >
+            <QrCode className="w-4 h-4" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setTempHost(pcHost);
+              setShowSettings(true);
+            }}
+            className="h-8 w-8 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-blue-400 hover:border-slate-700 active:scale-95 transition-all flex items-center justify-center shadow-xs"
+            title="Settings"
+          >
+            <Settings className="w-4 h-4" />
+          </button>
         </div>
       </header>
 
@@ -615,6 +592,139 @@ export default function App() {
           </button>
         </form>
       </footer>
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-sm rounded-3xl bg-slate-900 border border-slate-800 p-6 flex flex-col gap-4 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <Settings className="w-4 h-4 text-blue-400" />
+                Connection & Settings
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowSettings(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 active:scale-95 transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-1.5 text-xs text-slate-400">
+              <span className="font-medium text-slate-300">PC IP Address or Host URL</span>
+              <input
+                type="text"
+                value={tempHost}
+                onChange={(e) => setTempHost(e.target.value)}
+                placeholder="http://192.168.0.x:5000"
+                className="w-full h-11 px-3.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 text-sm outline-none focus:border-blue-500 font-mono"
+              />
+              <span className="text-[11px] text-slate-500">
+                Leave empty to automatically connect to the current origin.
+              </span>
+            </div>
+
+            {/* Auto-Start with Windows */}
+            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-950 border border-slate-800">
+              <div className="flex flex-col pr-2">
+                <span className="text-xs font-semibold text-white">Start with Windows</span>
+                <span className="text-[10px] text-slate-400">Launch MyPc-Input when PC boots</span>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                <input
+                  type="checkbox"
+                  checked={autoStart}
+                  onChange={toggleAutoStart}
+                  className="sr-only peer"
+                />
+                <div className="w-10 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+
+            {/* PWA Install */}
+            {installPrompt && !isAppInstalled && (
+              <button
+                type="button"
+                onClick={handleInstallClick}
+                className="w-full h-10 rounded-xl bg-slate-800 text-slate-200 text-xs font-semibold flex items-center justify-center gap-2 hover:bg-slate-700 active:scale-95 transition-all"
+              >
+                <Smartphone className="w-4 h-4 text-blue-400" />
+                Install as Home Screen App
+              </button>
+            )}
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800/80">
+              <button
+                type="button"
+                onClick={() => setShowSettings(false)}
+                className="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700 active:scale-95 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={saveHost}
+                className="px-5 py-2.5 rounded-xl bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 active:scale-95 transition-all shadow-sm"
+              >
+                Save & Connect
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* QR Code Modal */}
+      {showQrModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-xs rounded-3xl bg-slate-900 border border-slate-800 p-6 flex flex-col items-center gap-4 text-center shadow-2xl">
+            <div className="flex items-center justify-between w-full">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <QrCode className="w-4 h-4 text-blue-400" />
+                Scan to Connect
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowQrModal(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 active:scale-95 transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-3 bg-white rounded-2xl shadow-inner">
+              <img
+                src="/api/qrcode"
+                alt="QR Code"
+                className="w-[180px] h-[180px] object-contain rounded-lg"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  const fallback = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(lanUrl || (typeof window !== 'undefined' ? window.location.origin : ''))}`;
+                  if (target.src !== fallback) {
+                    target.src = fallback;
+                  }
+                }}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1 w-full">
+              <span className="text-[11px] text-slate-400">Scan with your phone camera or visit:</span>
+              <span className="text-xs text-blue-400 font-mono break-all px-2 py-1 bg-slate-950 rounded-lg border border-slate-800 select-all">
+                {lanUrl || (typeof window !== 'undefined' ? window.location.origin : '')}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={copyUrlToClipboard}
+              className="w-full h-11 rounded-xl bg-blue-600 text-white text-xs font-semibold flex items-center justify-center gap-2 hover:bg-blue-700 active:scale-95 transition-all shadow-sm"
+            >
+              {copiedUrl ? <Check className="w-4 h-4 text-emerald-300" /> : <Copy className="w-4 h-4" />}
+              <span>{copiedUrl ? 'Copied to Clipboard!' : 'Copy Connection Link'}</span>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

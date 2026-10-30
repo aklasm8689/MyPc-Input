@@ -1,6 +1,9 @@
 node_modules/
 build/
 dist/
+dist-exe/
+dist-server/
+release/
 coverage/
 .DS_Store
 *.log
@@ -8,7 +11,7 @@ coverage/
 !.env.example
 .idea/
 .lanip
-app.ico
+
 *.iml
 .gradle/
 .aider*
